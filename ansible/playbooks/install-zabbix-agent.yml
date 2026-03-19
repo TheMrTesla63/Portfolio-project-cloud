@@ -1,0 +1,48 @@
+---
+- name: Install and configure Zabbix agent
+  hosts: all
+  become: true
+
+  vars:
+    zabbix_server_ip: 10.24.44.110
+
+  tasks:
+    - name: Install Zabbix repository
+      apt:
+        deb: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
+        state: present
+      register: zabbix_repo
+      failed_when: zabbix_repo.failed and "A later version is already installed" not in zabbix_repo.msg
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Zabbix agent
+      apt:
+        name: zabbix-agent
+        state: present
+
+    - name: Set Zabbix server
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Server='
+        line: "Server={{ zabbix_server_ip }}"
+
+    - name: Set active server
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^ServerActive='
+        line: "ServerActive={{ zabbix_server_ip }}"
+
+    - name: Set hostname
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Hostname='
+        line: "Hostname={{ inventory_hostname }}"
+
+    - name: Enable and restart agent
+      service:
+        name: zabbix-agent
+        state: restarted
+        enabled: true
