@@ -81,9 +81,15 @@
         src: /tmp/wordpress.tar.gz
         dest: /var/www/
         remote_src: yes
+        creates: /var/www/wordpress/index.php
 
-    - name: Move WordPress to web root
-      command: mv /var/www/wordpress /var/www/html
+    - name: Remove default nginx index page if present
+      file:
+        path: /var/www/html/index.nginx-debian.html
+        state: absent
+
+    - name: Copy WordPress files into web root
+      shell: cp -a /var/www/wordpress/. /var/www/html/
       args:
         creates: /var/www/html/index.php
 
