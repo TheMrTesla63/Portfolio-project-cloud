@@ -132,6 +132,9 @@
         insertafter: '^\[{{ inventory_group }}\]$'
         line: "{{ hostname }} ansible_host={{ lxc_ip.split('/')[0] }} ansible_user={{ ansible_bootstrap_user }}"
         state: present
+      delegate_to: localhost
+      become: false
+      run_once: true
 
     - name: Show result
       ansible.builtin.debug:
