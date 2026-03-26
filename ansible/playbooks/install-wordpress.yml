@@ -56,27 +56,26 @@
         - mariadb
 
     - name: Set MariaDB root password
-      mysql_user:
+      community.mysql.mysql_user:
         name: root
         host: localhost
         password: "{{ db_root_password }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
+        login_unix_socket: /run/mysqld/mysqld.sock
+        state: present
 
-    - name: Create database
-      mysql_db:
+    - name: Create WordPress database
+      community.mysql.mysql_db:
         name: "{{ db_name }}"
         state: present
-        login_user: root
-        login_password: "{{ db_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
 
-    - name: Create db user
-      mysql_user:
+    - name: Create WordPress user
+      community.mysql.mysql_user:
         name: "{{ db_user }}"
         password: "{{ db_password }}"
         priv: "{{ db_name }}.*:ALL"
         state: present
-        login_user: root
-        login_password: "{{ db_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
 
     - name: Download WordPress
       get_url:
@@ -101,7 +100,35 @@
         group: www-data
         recurse: yes
 
+    - name: Configure nginx for WordPress
+      copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              root /var/www/html;
+              index index.php index.html index.htm;
+
+              server_name _;
+
+              location / {
+                  try_files $uri $uri/ /index.php?$args;
+              }
+
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+              }
+
+              location ~ /\.ht {
+                  deny all;
+              }
+          }
+
     - name: Restart nginx
       service:
         name: nginx
         state: restarted
+
