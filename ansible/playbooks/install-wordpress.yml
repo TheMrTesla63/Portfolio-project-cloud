@@ -55,14 +55,6 @@
         - nginx
         - mariadb
 
-    - name: Set MariaDB root password
-      community.mysql.mysql_user:
-        name: root
-        host: localhost
-        password: "{{ db_root_password }}"
-        login_unix_socket: /run/mysqld/mysqld.sock
-        state: present
-
     - name: Create WordPress database
       community.mysql.mysql_db:
         name: "{{ db_name }}"
