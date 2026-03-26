@@ -1,0 +1,92 @@
+---
+- name: Install and configure WordPress
+  hosts: klant_lxc:klant_vm_ha
+  become: true
+
+  vars:
+    db_name: wordpress
+    db_user: wpuser
+    db_password: wppassword
+    db_root_password: rootpassword
+
+  tasks:
+
+    - name: Update apt
+      apt:
+        update_cache: yes
+
+    - name: Install packages
+      apt:
+        name:
+          - nginx
+          - mariadb-server
+          - php-fpm
+          - php-mysql
+          - php-cli
+          - php-curl
+          - php-gd
+          - php-mbstring
+          - php-xml
+          - unzip
+          - wget
+        state: present
+
+    - name: Start services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - nginx
+        - mariadb
+
+    - name: Set MariaDB root password
+      mysql_user:
+        name: root
+        host: localhost
+        password: "{{ db_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_user: root
+        login_password: "{{ db_root_password }}"
+
+    - name: Create db user
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ db_root_password }}"
+
+    - name: Download WordPress
+      get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: /tmp/wordpress.tar.gz
+
+    - name: Extract WordPress
+      unarchive:
+        src: /tmp/wordpress.tar.gz
+        dest: /var/www/
+        remote_src: yes
+
+    - name: Move WordPress to web root
+      command: mv /var/www/wordpress /var/www/html
+      args:
+        creates: /var/www/html/index.php
+
+    - name: Set permissions
+      file:
+        path: /var/www/html
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
