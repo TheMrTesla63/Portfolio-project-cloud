@@ -29,7 +29,22 @@
           - php-xml
           - unzip
           - wget
+          - python3-pymysql
         state: present
+
+    - name: Stop and disable Apache if present
+      service:
+        name: apache2
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Remove Apache if present
+      apt:
+        name: apache2
+        state: absent
+        purge: true
+      failed_when: false
 
     - name: Start services
       service:
