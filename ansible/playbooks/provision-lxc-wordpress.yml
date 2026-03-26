@@ -36,14 +36,9 @@
       failed_when: false
       changed_when: false
 
-    - name: Read public SSH key from monitoring server
-      ansible.builtin.slurp:
-        src: "{{ ansible_public_key_file }}"
-      register: public_key_raw
-
-    - name: Decode public SSH key
+    - name: Read public SSH key from control node
       ansible.builtin.set_fact:
-        ansible_public_key: "{{ public_key_raw.content | b64decode | trim }}"
+        ansible_public_key: "{{ lookup('file', ansible_public_key_file) | trim }}"
 
     - name: Create LXC container if missing
       ansible.builtin.command:
