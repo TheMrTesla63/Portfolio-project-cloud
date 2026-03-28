@@ -1,0 +1,44 @@
+---
+- name: Configure Proxmox HA for VM
+  hosts: proxmox
+  become: true
+  gather_facts: false
+
+  vars:
+    target_node: "pve01"
+    vmid: 151
+    ha_group: "ha-group"
+    ha_nodes: "pve01,pve02,pve03"
+
+  tasks:
+
+    - name: Only run on one Proxmox node
+      meta: end_host
+      when: inventory_hostname != target_node
+
+    - name: Create HA group
+      command: >
+        ha-manager groupadd {{ ha_group }} --nodes {{ ha_nodes }}
+      register: ha_group_result
+      failed_when: false
+      changed_when: "'already exists' not in ha_group_result.stderr"
+
+    - name: Add VM to HA
+      command: >
+        ha-manager add vm:{{ vmid }} --group {{ ha_group }}
+      register: ha_add_result
+      failed_when: false
+      changed_when: "'already' not in ha_add_result.stderr"
+
+    - name: Enable HA service for VM
+      command: >
+        ha-manager set vm:{{ vmid }} --state started
+      failed_when: false
+
+    - name: Show HA status
+      command: ha-manager status
+      register: ha_status
+
+    - name: Print HA status
+      debug:
+        var: ha_status.stdout
