@@ -1,6 +1,6 @@
 ---
 - name: Install and configure Zabbix agent
-  hosts: all
+  hosts: klant_vm_ha:klant_lxc
   become: true
 
   vars:
