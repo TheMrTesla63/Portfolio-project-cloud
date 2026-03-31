@@ -1,0 +1,70 @@
+---
+- name: Provision Ubuntu VM for WordPress
+  hosts: proxmox
+  become: true
+  gather_facts: false
+
+  vars:
+    target_node: "pve01"
+
+    vmid: 151
+    name: "vm-ha-wp1"
+    memory: 2048
+    cores: 2
+    disk: "local-lvm:32"
+    iso: "local:iso/ubuntu-24.04-live-server-amd64.iso"
+
+    bridge: "vmbr0"
+    ip: "10.24.44.151"
+    gateway: "10.24.44.1"
+
+    inventory_file: "/home/monitoring/Portfolio-project-cloud/ansible/inventory/hosts.ini"
+
+  tasks:
+    - name: Only run on selected node
+      meta: end_host
+      when: inventory_hostname != target_node
+
+    - name: Check if VM exists
+      shell: "qm status {{ vmid }}"
+      register: vm_status
+      failed_when: false
+      changed_when: false
+
+    - name: Create VM if not exists
+      command: >
+        qm create {{ vmid }}
+        --name {{ name }}
+        --memory {{ memory }}
+        --cores {{ cores }}
+        --net0 virtio,bridge={{ bridge }}
+      when: vm_status.rc != 0
+
+    - name: Set disk
+      command: >
+        qm set {{ vmid }} --scsi0 {{ disk }}
+      when: vm_status.rc != 0
+
+    - name: Attach ISO
+      command: >
+        qm set {{ vmid }} --ide2 {{ iso }},media=cdrom
+      when: vm_status.rc != 0
+
+    - name: Set boot order
+      command: >
+        qm set {{ vmid }} --boot order=scsi0
+      when: vm_status.rc != 0
+
+    - name: Start VM
+      command: qm start {{ vmid }}
+      failed_when: false
+
+    - name: Add VM to inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        insertafter: '^\[klant_vm_ha\]$'
+        line: "{{ name }} ansible_host={{ ip }} ansible_user=ansible"
+        state: present
+      delegate_to: localhost
+      become: false
+      run_once: true
