@@ -15,7 +15,7 @@
 
     bridge: "vmbr0"
     storage_pool: "ceph-pool"
-    image_file: "/root/ubuntu-24.04-server-cloudimg-amd64.img"
+    image_file: "/var/lib/vz/template/iso/ubuntu-24.04-server-cloudimg-amd64.img"
 
     vm_ip: "10.24.44.151/24"
     gateway: "10.24.44.1"
