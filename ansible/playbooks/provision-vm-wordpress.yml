@@ -11,8 +11,8 @@
     name: "vm-ha-wp1"
     memory: 2048
     cores: 2
-    disk: "local-lvm:32"
-    iso: "local:iso/ubuntu-24.04-live-server-amd64.iso"
+    disk: "ceph-pool:32"
+    iso: "local:iso/ubuntu-24.04.4-live-server-amd64.iso"
 
     bridge: "vmbr0"
     ip: "10.24.44.151"
@@ -26,7 +26,7 @@
       when: inventory_hostname != target_node
 
     - name: Check if VM exists
-      shell: "qm status {{ vmid }}"
+      command: "qm status {{ vmid }}"
       register: vm_status
       failed_when: false
       changed_when: false
@@ -38,6 +38,9 @@
         --memory {{ memory }}
         --cores {{ cores }}
         --net0 virtio,bridge={{ bridge }}
+        --agent 1
+        --ostype l26
+        --scsihw virtio-scsi-single
       when: vm_status.rc != 0
 
     - name: Set disk
@@ -52,12 +55,21 @@
 
     - name: Set boot order
       command: >
-        qm set {{ vmid }} --boot order=scsi0
+        qm set {{ vmid }} --boot order=ide2;scsi0;net0
       when: vm_status.rc != 0
 
     - name: Start VM
       command: qm start {{ vmid }}
       failed_when: false
+
+    - name: Ensure klant_vm_ha group exists
+      lineinfile:
+        path: "{{ inventory_file }}"
+        line: "[klant_vm_ha]"
+        state: present
+      delegate_to: localhost
+      become: false
+      run_once: true
 
     - name: Add VM to inventory
       lineinfile:
