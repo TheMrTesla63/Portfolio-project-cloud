@@ -118,6 +118,22 @@
       command: "qm start {{ vmid }}"
       failed_when: false
 
+    - name: Wait for SSH port to become reachable
+      wait_for:
+        host: "{{ vm_ip.split('/')[0] }}"
+        port: 22
+        delay: 10
+        timeout: 300
+        state: started
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Wait for VM to accept Ansible connection
+      wait_for_connection:
+        delay: 5
+        timeout: 300
+
     - name: Ensure inventory group exists
       lineinfile:
         path: "{{ inventory_file }}"
