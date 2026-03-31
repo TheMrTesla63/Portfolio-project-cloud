@@ -1,4 +1,5 @@
 ---
+- import_playbook: provision-vm-cloudinit.yml
 - import_playbook: provision-lxc-wordpress.yml
 - import_playbook: install-wordpress.yml
 - import_playbook: configure-ha.yml
