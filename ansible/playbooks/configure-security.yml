@@ -1,6 +1,6 @@
 ---
-- name: Basic security for HA VM
-  hosts: klant_vm_ha
+- name: Configure security for customer servers
+  hosts: klant_vm_ha:klant_lxc
   become: true
 
   vars:
