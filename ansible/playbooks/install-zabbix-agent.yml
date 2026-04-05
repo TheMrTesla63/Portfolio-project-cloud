@@ -7,6 +7,18 @@
     zabbix_server_ip: 10.24.44.110
 
   tasks:
+    - name: Wait for cloud-init
+      shell: cloud-init status --wait
+      changed_when: false
+      failed_when: false
+
+    - name: Wait for apt lock
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          sleep 2
+        done
+      changed_when: false
+
     - name: Install Zabbix repository
       apt:
         deb: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
