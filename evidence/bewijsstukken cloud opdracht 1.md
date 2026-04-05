@@ -43,9 +43,14 @@ Ik ben verantwoordelijk voor:
 * [ ] Screenshot cluster (pve01/pve02/pve03)
 ![Proxmox cluster](images/cluster.png)
 * [ ] Screenshot enterprise repo configuratie
-* [ ] Ansible playbook voor updates (`update.yml`)
+De enterprise repository is uitgeschakeld en vervangen door de no-subscription repository.  
+Dit is zichtbaar in de Proxmox GUI en via de APT configuratie.  
+![Proxmox cluster](images/enterprise-cli.png)
+![Proxmox cluster](images/enterprise-gui.png)
+* [ ] Ansible playbook voor updates (`update.yml`) zie ansible/playbooks/update.yml
+![Proxmox cluster](images/crontab.png) 
 * [ ] Monitoring (Zabbix) dashboard
-
+![Proxmox cluster](images/zabbix.png) 
 ---
 
 ## 2. HA met shared storage (1 pt)
@@ -58,24 +63,27 @@ Ik ben verantwoordelijk voor:
 **Bewijs:**
 
 * [ ] `qm config` → storage = ceph-pool
+![Proxmox cluster](images/qmconfig.png) 
 * [ ] Screenshot storage configuratie
+![Proxmox cluster](images/pvesm-cli.png) 
+![Proxmox cluster](images/ceph-pool.png)
 * [ ] HA status output (`ha-manager status`)
+![Proxmox cluster](images/ha-manager-status.png)
 
 ---
 
 ## 3. Orchestration script (bash/python) (2 pt)
 
-**Eis:**
-
-* Scriptmatige automatisering vóór Ansible
+**Toelichting:**
+Na handmatig uitvoeren van de meeste stappen (wordpress installatie, zabbix installatie, toevoegen aan HA) is direct gekozen voor Ansible als automatiseringstool. Dit was toegestaan binnen de opdracht, zolang de uitrol volledig geautomatiseerd en navolgbaar is.
 
 **Bewijs:**
-
-* [ ] Bash script(s) voor WordPress installatie
-* [ ] CLI stappen gedocumenteerd
-* [ ] Screenshots van handmatige installatie
-
----
+- [ ] Handmatige installatie gedocumenteerd (o.a. Gitea)
+Zie evidence/Gitea install.md
+- [ ] Ansible playbooks voor volledige automatisering
+Zie commit geschiedenis in ansible/playbooks
+- [ ] Navolgbare commitgeschiedenis in Git
+Zie commit geschiedenis in repo
 
 ## 4. Orchestration naar Ansible (2 pt)
 
@@ -87,20 +95,26 @@ Ik ben verantwoordelijk voor:
 
 * [ ] `install-wordpress.yml`
 * [ ] `provision-*` playbooks
-* [ ] Uitleg verschil handmatig vs Ansible
 
 ---
 
 ## 5. 6× WordPress servers (LXC) (3 pt)
 
 **Eis:**
-
+Zie ansible/playbooks/provision-lxc-wordpress.yml voor LXC config en ansible/playbooks/configure-security.yml voor firewall
+Vooral: 
 * 6 containers
+    lxc_count: 6
 * 30GB disk
+    disk: "local-lvm:30"
 * 1 CPU
+    cores: 1
 * 1GB RAM
+    memory: 1024
 * Netwerk beperkt tot 50MB/s
+    network_rate: 50
 * Firewall correct ingesteld
+  - name: Install UFW....
 
 **Bewijs:**
 
