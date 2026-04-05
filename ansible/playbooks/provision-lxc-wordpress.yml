@@ -1,5 +1,5 @@
 ---
-- name: Provision Ubuntu LXC for WordPress on Proxmox
+- name: Provision scalable Ubuntu LXCs for WordPress on Proxmox
   hosts: proxmox
   become: true
   gather_facts: false
@@ -7,15 +7,17 @@
   vars:
     target_node: "pve01"
 
-    ctid: 161
-    hostname: "lxc-wp1"
-    lxc_ip: "10.24.44.161/24"
+    template: "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
     gateway: "10.24.44.1"
+    subnet_prefix: "10.24.44"
+    start_ip_octet: 161
+    start_ctid: 161
+    lxc_count: 6
 
     cores: 1
     memory: 1024
     disk: "local-lvm:30"
-    template: "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+    network_rate: 50
 
     ansible_bootstrap_user: "ansible"
     ansible_public_key_file: "/root/.ssh/id_ed25519.pub"
@@ -30,25 +32,46 @@
       ansible.builtin.meta: end_host
       when: inventory_hostname != target_node
 
-    - name: Check whether container already exists
-      ansible.builtin.shell: "pct status {{ ctid }}"
-      register: pct_status
-      failed_when: false
-      changed_when: false
-
     - name: Read public SSH key from control node
       ansible.builtin.set_fact:
         ansible_public_key: "{{ lookup('file', ansible_public_key_file) | trim }}"
 
-    - name: Create LXC container if missing
+    - name: Ensure inventory group exists
+      ansible.builtin.lineinfile:
+        path: "{{ inventory_file }}"
+        line: "[{{ inventory_group }}]"
+        state: present
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Build container definitions
+      ansible.builtin.set_fact:
+        lxc_containers: "{{ lxc_containers | default([]) + [ {
+          'ctid': (start_ctid + item),
+          'hostname': 'lxc-wp' ~ (item + 1),
+          'ip': subnet_prefix ~ '.' ~ (start_ip_octet + item)
+        } ] }}"
+      loop: "{{ range(0, lxc_count) | list }}"
+
+    - name: Check whether container already exists
+      ansible.builtin.command: "pct status {{ item.ctid }}"
+      register: pct_status_results
+      failed_when: false
+      changed_when: false
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+
+    - name: Create missing LXC containers
       ansible.builtin.command:
         argv:
           - pct
           - create
-          - "{{ ctid }}"
+          - "{{ item.item.ctid }}"
           - "{{ template }}"
           - --hostname
-          - "{{ hostname }}"
+          - "{{ item.item.hostname }}"
           - --cores
           - "{{ cores | string }}"
           - --memory
@@ -56,20 +79,26 @@
           - --rootfs
           - "{{ disk }}"
           - --net0
-          - "name=eth0,bridge=vmbr0,ip={{ lxc_ip }},gw={{ gateway }}"
+          - "name=eth0,bridge=vmbr0,ip={{ item.item.ip }}/24,gw={{ gateway }},rate={{ network_rate }}"
           - --unprivileged
           - "1"
           - --features
           - "nesting=1"
           - --password
           - "{{ temp_root_password }}"
-      when: pct_status.rc != 0
+      when: item.rc != 0
+      loop: "{{ pct_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.hostname }}"
 
-    - name: Start container
-      ansible.builtin.command: "pct start {{ ctid }}"
+    - name: Start containers
+      ansible.builtin.command: "pct start {{ item.ctid }}"
       register: pct_start
       failed_when: false
-      changed_when: "'started' in pct_start.stdout or pct_start.rc == 0"
+      changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Wait a few seconds after start
       ansible.builtin.pause:
@@ -77,68 +106,90 @@
 
     - name: Install required bootstrap packages in container
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "apt-get update &&
          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server sudo python3"
-      register: bootstrap_packages
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Enable SSH service in container
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "systemctl enable ssh && systemctl restart ssh"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Ensure ansible user exists
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "id -u {{ ansible_bootstrap_user }} >/dev/null 2>&1 ||
          useradd -m -s /bin/bash {{ ansible_bootstrap_user }}"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Ensure ansible user is in sudo group
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "usermod -aG sudo {{ ansible_bootstrap_user }}"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Create .ssh directory for ansible user
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "mkdir -p /home/{{ ansible_bootstrap_user }}/.ssh &&
          chown -R {{ ansible_bootstrap_user }}:{{ ansible_bootstrap_user }} /home/{{ ansible_bootstrap_user }}/.ssh &&
          chmod 700 /home/{{ ansible_bootstrap_user }}/.ssh"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Add public key to authorized_keys
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "grep -qxF '{{ ansible_public_key }}' /home/{{ ansible_bootstrap_user }}/.ssh/authorized_keys 2>/dev/null ||
          echo '{{ ansible_public_key }}' >> /home/{{ ansible_bootstrap_user }}/.ssh/authorized_keys &&
          chown {{ ansible_bootstrap_user }}:{{ ansible_bootstrap_user }} /home/{{ ansible_bootstrap_user }}/.ssh/authorized_keys &&
          chmod 600 /home/{{ ansible_bootstrap_user }}/.ssh/authorized_keys"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Configure passwordless sudo for ansible user
       ansible.builtin.command: >
-        pct exec {{ ctid }} -- bash -lc
+        pct exec {{ item.ctid }} -- bash -lc
         "echo '{{ ansible_bootstrap_user }} ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/{{ ansible_bootstrap_user }} &&
          chmod 440 /etc/sudoers.d/{{ ansible_bootstrap_user }}"
       changed_when: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
-    - name: Add new LXC to inventory group
+    - name: Add LXCs to inventory group
       ansible.builtin.lineinfile:
         path: "{{ inventory_file }}"
         insertafter: '^\[{{ inventory_group }}\]$'
-        line: "{{ hostname }} ansible_host={{ lxc_ip.split('/')[0] }} ansible_user={{ ansible_bootstrap_user }}"
+        line: "{{ item.hostname }} ansible_host={{ item.ip }} ansible_user={{ ansible_bootstrap_user }}"
         state: present
       delegate_to: localhost
       become: false
-      run_once: true
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
 
     - name: Show result
       ansible.builtin.debug:
-        msg:
-          - "LXC {{ hostname }} created or already present on {{ target_node }}"
-          - "IP: {{ lxc_ip.split('/')[0] }}"
-          - "Inventory updated: {{ inventory_file }}"
+        msg: "LXC {{ item.hostname }} deployed with IP {{ item.ip }}, CTID {{ item.ctid }}, rate {{ network_rate }} MB/s"
+      loop: "{{ lxc_containers }}"
+      loop_control:
+        label: "{{ item.hostname }}"
