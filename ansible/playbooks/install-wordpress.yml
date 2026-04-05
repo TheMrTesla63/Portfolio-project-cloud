@@ -10,6 +10,17 @@
     db_root_password: rootpassword
 
   tasks:
+    - name: Wait for cloud-init
+      shell: cloud-init status --wait
+      changed_when: false
+      failed_when: false
+
+    - name: Wait for apt lock
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          sleep 2
+        done
+      changed_when: false
 
     - name: Update apt
       apt:
