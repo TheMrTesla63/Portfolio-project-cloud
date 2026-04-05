@@ -165,10 +165,13 @@ Vooral:
 
 **Bewijs:**
 
-* [ ] `configure-security.yml` zie hier de configuratie voor SSH keys
-* [ ] `hosts.ini` met `ssh_user`
+* [ ] `configure-security.yml` zie hier de configuratie voor SSH keys 
+* [ ] `zie hosts.ini` met `elk een unieke ssh_user`
 * [ ] `/home/<user>/.ssh/authorized_keys`
+<img width="1283" height="358" alt="image" src="https://github.com/user-attachments/assets/d7394b60-6ac4-486c-85e8-e54d3819c5d4" />
 * [ ] Login test (`ssh user@host`)
+      <img width="879" height="641" alt="image" src="https://github.com/user-attachments/assets/4aac38a9-bd01-4c14-8279-ebb686a03aae" />
+
 
 ---
 
@@ -182,8 +185,12 @@ Vooral:
 
 * [ ] `install-zabbix-agent.yml`
 * [ ] Zabbix dashboard met hosts
+      <img width="2560" height="1064" alt="image" src="https://github.com/user-attachments/assets/f87377b8-ec80-476d-a60c-b1bc8804d692" />
 * [ ] Hostname configuratie in agent
+      Zie bovenstaande afbeelding en install-zabbix-agent.yml
 * [ ] Auto-discovery / group assignment
+      <img width="1501" height="601" alt="image" src="https://github.com/user-attachments/assets/dfea6993-e28c-435c-89f9-6d5919864d3b" />
+
 
 ---
 
