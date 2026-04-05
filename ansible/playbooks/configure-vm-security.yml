@@ -64,6 +64,11 @@
         direction: outgoing
         policy: allow
 
+    - name: Allow Zabbix agent
+      ufw:
+       rule: allow
+       port: 10050
+
     - name: Allow SSH
       ufw:
         rule: allow
