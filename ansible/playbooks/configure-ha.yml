@@ -1,17 +1,15 @@
 ---
-- name: Configure Proxmox HA for VM
+- name: Configure Proxmox HA for VMs from inventory
   hosts: proxmox
   become: true
   gather_facts: false
 
   vars:
     target_node: "pve01"
-    vmid: 151
     ha_group: "ha-group"
-    ha_nodes: "pve01,pve02,pve03"
+    ha_nodes: "PVE01,PVE02,PVE03"
 
   tasks:
-
     - name: Only run on one Proxmox node
       meta: end_host
       when: inventory_hostname != target_node
@@ -21,23 +19,26 @@
         ha-manager groupadd {{ ha_group }} --nodes {{ ha_nodes }}
       register: ha_group_result
       failed_when: false
-      changed_when: "'already exists' not in ha_group_result.stderr"
+      changed_when: "'already exists' not in (ha_group_result.stderr | default(''))"
 
-    - name: Add VM to HA
+    - name: Add VMs from klant_vm_ha group to HA
       command: >
-        ha-manager add vm:{{ vmid }} --group {{ ha_group }}
+        ha-manager add vm:{{ hostvars[item].vmid }} --group {{ ha_group }}
       register: ha_add_result
       failed_when: false
-      changed_when: "'already' not in ha_add_result.stderr"
+      changed_when: "'already' not in (ha_add_result.stderr | default(''))"
+      loop: "{{ groups['klant_vm_ha'] }}"
 
-    - name: Enable HA service for VM
+    - name: Enable HA service for VMs
       command: >
-        ha-manager set vm:{{ vmid }} --state started
+        ha-manager set vm:{{ hostvars[item].vmid }} --state started
       failed_when: false
+      loop: "{{ groups['klant_vm_ha'] }}"
 
     - name: Show HA status
       command: ha-manager status
       register: ha_status
+      changed_when: false
 
     - name: Print HA status
       debug:
