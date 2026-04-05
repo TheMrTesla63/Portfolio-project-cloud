@@ -26,7 +26,37 @@ Ik ben verantwoordelijk voor:
 * VM’s met Proxmox HA
 
 ---
+# Netwerktekening
+---
+## Infrastructuur (Cluster + Core services)
+| Hostname   | Type         | IP-adres     | Doel                               |
+| ---------- | ------------ | ------------ | ---------------------------------- |
+| pve01      | Proxmox node | 10.24.44.101 | Cluster node + HA + workloads      |
+| pve02      | Proxmox node | 10.24.44.102 | Cluster node + HA + workloads      |
+| pve03      | Proxmox node | 10.24.44.103 | Cluster node + HA + workloads      |
+| monitoring | VM + HA      | 10.24.44.110 | Monitoring (Zabbix / ansible)      |
+| ubuntu-git | VM           | 10.24.44.200 | Git server (Gitea)                 |
 
+## Klant 1: LXC wordpress
+| Hostname | Type | IP-adres     | Node  | Doel               |
+| -------- | ---- | ------------ | ----- | ------------------ |
+| lxc-wp1  | LXC  | 10.24.44.161 | pve01 | WordPress instance |
+| lxc-wp2  | LXC  | 10.24.44.162 | pve01 | WordPress instance |
+| lxc-wp3  | LXC  | 10.24.44.163 | pve01 | WordPress instance |
+| lxc-wp4  | LXC  | 10.24.44.164 | pve01 | WordPress instance |
+| lxc-wp5  | LXC  | 10.24.44.165 | pve01 | WordPress instance |
+| lxc-wp6  | LXC  | 10.24.44.166 | pve01 | WordPress instance |
+| lxc-wp7-39  | LXC  | 10.24.44.167-199 | pve01 | WordPress instance |
+
+## Klant 2: VM High Availability
+| Hostname  | Type | IP-adres     | HA Group | Doel            |
+| --------- | ---- | ------------ | -------- | --------------- |
+| vm-ha-wp1 | VM   | 10.24.44.121 | HA       | WordPress / CRM |
+| vm-ha-wp2 | VM   | 10.24.44.122 | HA       | WordPress / CRM |
+| vm-ha-wp3 | VM   | 10.24.44.123 | HA       | WordPress / CRM |
+| vm-ha-wp4-39 | VM   | 10.24.44.124-159 | HA       | WordPress / CRM |
+
+---
 # Beoordelingscriteria + bewijs
 
 ## 1. Proxmox cluster inrichting (3 pt)
