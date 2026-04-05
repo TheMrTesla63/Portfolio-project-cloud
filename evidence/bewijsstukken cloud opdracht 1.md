@@ -93,8 +93,11 @@ Zie commit geschiedenis in repo
 
 **Bewijs:**
 
-* [ ] `install-wordpress.yml`
-* [ ] `provision-*` playbooks
+* [ ] `install-wordpress.yml` installatie wordpress
+* [ ] `install-zabbix-agent.yml` installatie zabbix en auto-join
+* [ ] `provision-*` playbooks installatie LXC container en cloudinit VM's (en losstaande iso VM)
+* [ ] `configure-*` playbooks configuratie van High Availability en security
+* [ ] `site*` playbooks Playbooks voor hele site en LXC/VM's alleen
 
 ---
 
@@ -118,11 +121,17 @@ Vooral:
 
 **Bewijs:**
 
-* [ ] `provision-lxc-wordpress.yml`
-* [ ] `pct config` output
+* [ ] `provision-lxc-wordpress.yml` (automatische deployment + rate limit)
+* [ ] `pct config` output bevestigt:
+  - disk = 30G  
+  - cores = 1  
+  - memory = 1024  
+  - net0 rate=50  
+     ![Proxmox cluster](images/pct161.png)
 * [ ] Screenshot van 6 containers
-* [ ] Firewall regels (UFW / Proxmox)
-* [ ] Netwerk rate limit config
+      ![Proxmox cluster](images/lxc6.png)
+* [ ] Firewall regels (UFW / Proxmox) (`configure-security.yml` / UFW regels)
+* [ ] Netwerk rate limit zichtbaar in `pct config` (rate=50)
 
 ---
 
@@ -134,10 +143,16 @@ Vooral:
 
 **Bewijs:**
 
-* [ ] `configure-ha.yml`
-* [ ] `ha-manager config`
-* [ ] `ha-manager status`
+* [ ] `configure-ha.yml` (automatisch toevoegen VM’s aan HA)
+* [ ] `ha-manager config` VM’s zichtbaar in HA configuratie
+      ![Proxmox cluster](images/ha-config.png)
+* [ ] `ha-manager status` services actief op cluster nodes
+      ![Proxmox cluster](images/ha-status.png) 
 * [ ] Failover test (node uitzetten)
+      ![Proxmox cluster](images/pve01-aan.png) Zie hier dat zowel de HA VM's op PVE01 zitten als de LXC containers
+      Na uitzetten zien we dat de LXC containers onbereikbaar zijn (goedkoop)
+      De HA VM's schakelen over naar PVE02 en PVE03
+      ![Proxmox cluster](images/pve01-uit.png) 
 
 ---
 
@@ -150,7 +165,7 @@ Vooral:
 
 **Bewijs:**
 
-* [ ] `configure-security.yml`
+* [ ] `configure-security.yml` zie hier de configuratie voor SSH keys
 * [ ] `hosts.ini` met `ssh_user`
 * [ ] `/home/<user>/.ssh/authorized_keys`
 * [ ] Login test (`ssh user@host`)
