@@ -1,5 +1,5 @@
 ---
-- name: Provision Ubuntu VM with cloud-init on Proxmox
+- name: Provision scalable Ubuntu HA VMs with cloud-init on Proxmox
   hosts: proxmox
   become: true
   gather_facts: false
@@ -7,19 +7,22 @@
   vars:
     target_node: "pve01"
 
-    vmid: 151
-    vm_name: "vm-ha-wp1"
+    start_vmid: 121
+    start_ip_octet: 121
+    vm_count: 1
+
+    vm_name_prefix: "vm-ha-wp"
+    subnet_prefix: "10.24.44"
+    gateway: "10.24.44.1"
+    nameserver: "1.1.1.1"
 
     cores: 2
     memory: 2048
+    disk_size: "32G"
 
     bridge: "vmbr0"
     storage_pool: "ceph-pool"
     image_file: "/var/lib/vz/template/iso/ubuntu-24.04-server-cloudimg-amd64.img"
-
-    vm_ip: "10.24.44.151/24"
-    gateway: "10.24.44.1"
-    nameserver: "1.1.1.1"
 
     ci_user: "ansible"
     ssh_public_key_file: "/root/.ssh/id_ed25519.pub"
@@ -32,107 +35,9 @@
       meta: end_host
       when: inventory_hostname != target_node
 
-    - name: Check whether VM already exists
-      command: "qm status {{ vmid }}"
-      register: vm_status
-      failed_when: false
-      changed_when: false
-
     - name: Read SSH public key from control node
       set_fact:
         ssh_public_key: "{{ lookup('file', ssh_public_key_file) | trim }}"
-
-    - name: Create VM
-      command: >
-        qm create {{ vmid }}
-        --name {{ vm_name }}
-        --memory {{ memory }}
-        --cores {{ cores }}
-        --net0 virtio,bridge={{ bridge }}
-        --agent 1
-        --ostype l26
-        --scsihw virtio-scsi-single
-        --serial0 socket
-        --vga serial0
-      when: vm_status.rc != 0
-
-    - name: Import cloud image disk into Ceph
-      command: >
-        qm importdisk {{ vmid }} {{ image_file }} {{ storage_pool }}
-      when: vm_status.rc != 0
-
-    - name: Attach imported disk
-      command: >
-        qm set {{ vmid }} --scsi0 {{ storage_pool }}:vm-{{ vmid }}-disk-0
-      when: vm_status.rc != 0
-
-    - name: Add cloud-init drive
-      command: >
-        qm set {{ vmid }} --ide2 {{ storage_pool }}:cloudinit
-      when: vm_status.rc != 0
-
-    - name: Set boot order
-      command: >
-        qm set {{ vmid }} --boot order=scsi0
-      when: vm_status.rc != 0
-
-    - name: Set cloud-init user
-      command: >
-        qm set {{ vmid }} --ciuser {{ ci_user }}
-      when: vm_status.rc != 0
-
-    - name: Copy SSH public key to Proxmox node temporarily
-      copy:
-        dest: "/tmp/vm-{{ vmid }}-id_ed25519.pub"
-        content: "{{ ssh_public_key }}\n"
-        mode: "0600"
-      when: vm_status.rc != 0
-
-    - name: Set cloud-init SSH key
-      command: >
-        qm set {{ vmid }} --sshkeys /tmp/vm-{{ vmid }}-id_ed25519.pub
-      when: vm_status.rc != 0
-
-    - name: Remove temporary SSH public key file
-      file:
-        path: "/tmp/vm-{{ vmid }}-id_ed25519.pub"
-        state: absent
-      when: vm_status.rc != 0
-
-    - name: Set cloud-init IP config
-      command: >
-        qm set {{ vmid }} --ipconfig0 ip={{ vm_ip }},gw={{ gateway }}
-      when: vm_status.rc != 0
-
-    - name: Set DNS nameserver
-      command: >
-        qm set {{ vmid }} --nameserver {{ nameserver }}
-      when: vm_status.rc != 0
-
-    - name: Resize disk to 32G
-      command: >
-        qm resize {{ vmid }} scsi0 32G
-      when: vm_status.rc != 0
-
-    - name: Start VM
-      command: "qm start {{ vmid }}"
-      failed_when: false
-
-    - name: Wait for SSH port to become reachable
-      wait_for:
-        host: "{{ vm_ip.split('/')[0] }}"
-        port: 22
-        delay: 10
-        timeout: 300
-        state: started
-      delegate_to: localhost
-      become: false
-      run_once: true
-
-    - name: Wait for VM to accept Ansible connection
-      wait_for_connection:
-        delay: 5
-        timeout: 300
 
     - name: Ensure inventory group exists
       lineinfile:
@@ -143,19 +48,157 @@
       become: false
       run_once: true
 
-    - name: Add VM to inventory
+    - name: Build VM definitions
+      set_fact:
+        vm_definitions: "{{ vm_definitions | default([]) + [ {
+          'vmid': (start_vmid + item),
+          'vm_name': vm_name_prefix ~ (item + 1),
+          'vm_ip': subnet_prefix ~ '.' ~ (start_ip_octet + item) ~ '/24'
+        } ] }}"
+      loop: "{{ range(0, vm_count) | list }}"
+
+    - name: Check whether VM already exists
+      command: "qm status {{ item.vmid }}"
+      register: vm_status_results
+      failed_when: false
+      changed_when: false
+      loop: "{{ vm_definitions }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+
+    - name: Create VM
+      command: >
+        qm create {{ item.item.vmid }}
+        --name {{ item.item.vm_name }}
+        --memory {{ memory }}
+        --cores {{ cores }}
+        --net0 virtio,bridge={{ bridge }}
+        --agent 1
+        --ostype l26
+        --scsihw virtio-scsi-single
+        --serial0 socket
+        --vga serial0
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Import cloud image disk into Ceph
+      command: >
+        qm importdisk {{ item.item.vmid }} {{ image_file }} {{ storage_pool }}
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Attach imported disk
+      command: >
+        qm set {{ item.item.vmid }} --scsi0 {{ storage_pool }}:vm-{{ item.item.vmid }}-disk-0
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Add cloud-init drive
+      command: >
+        qm set {{ item.item.vmid }} --ide2 {{ storage_pool }}:cloudinit
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Set boot order
+      command: >
+        qm set {{ item.item.vmid }} --boot order=scsi0
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Set cloud-init user
+      command: >
+        qm set {{ item.item.vmid }} --ciuser {{ ci_user }}
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Copy SSH public key to Proxmox node temporarily
+      copy:
+        dest: "/tmp/vm-{{ item.item.vmid }}-id_ed25519.pub"
+        content: "{{ ssh_public_key }}\n"
+        mode: "0600"
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Set cloud-init SSH key
+      command: >
+        qm set {{ item.item.vmid }} --sshkeys /tmp/vm-{{ item.item.vmid }}-id_ed25519.pub
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Remove temporary SSH public key file
+      file:
+        path: "/tmp/vm-{{ item.item.vmid }}-id_ed25519.pub"
+        state: absent
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Set cloud-init IP config
+      command: >
+        qm set {{ item.item.vmid }} --ipconfig0 ip={{ item.item.vm_ip }},gw={{ gateway }}
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Set DNS nameserver
+      command: >
+        qm set {{ item.item.vmid }} --nameserver {{ nameserver }}
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Resize disk
+      command: >
+        qm resize {{ item.item.vmid }} scsi0 {{ disk_size }}
+      when: item.rc != 0
+      loop: "{{ vm_status_results.results }}"
+      loop_control:
+        label: "{{ item.item.vm_name }}"
+
+    - name: Start VM
+      command: "qm start {{ item.vmid }}"
+      failed_when: false
+      loop: "{{ vm_definitions }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+
+    - name: Add VMs to inventory
       lineinfile:
         path: "{{ inventory_file }}"
         insertafter: '^\[{{ inventory_group }}\]$'
-        line: "{{ vm_name }} ansible_host={{ vm_ip.split('/')[0] }} ansible_user={{ ci_user }}"
+        line: "{{ item.vm_name }} ansible_host={{ item.vm_ip.split('/')[0] }} ansible_user={{ ci_user }}"
         state: present
       delegate_to: localhost
       become: false
-      run_once: true
+      loop: "{{ vm_definitions }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
 
     - name: Show result
       debug:
         msg:
-          - "VM {{ vm_name }} created on {{ target_node }}"
-          - "IP: {{ vm_ip.split('/')[0] }}"
-          - "Cloud-init user: {{ ci_user }}"
+          - "VM {{ item.vm_name }} created on {{ target_node }}"
+          - "IP: {{ item.vm_ip.split('/')[0] }}"
+          - "Specs: {{ cores }} vCPU / {{ memory }} MB / {{ disk_size }}"
+      loop: "{{ vm_definitions }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
