@@ -1,59 +1,139 @@
 # Leeswijzer
-In verband met de documentatie van Ansible etc zijn een hoop van de playbooks en commits gemaakt met engelstalige comments. De leeswijzer is voor het gemak in het nederlands
+
+In deze repository zijn de meeste Ansible playbooks en commits voorzien van Engelstalige comments. Dit is gedaan om aan te sluiten bij gangbare DevOps- en programmeerconventies. Deze leeswijzer en toelichting zijn in het Nederlands geschreven voor overzicht en duidelijkheid.
+
+---
+
 # Mappenstructuur
-## ansible 
-Bevat alle ansible gerelateerde bestanden
+
+## ansible
+
+Bevat alle Ansible-gerelateerde configuratiebestanden.
+
 ### inventory
-Bevat de hosts.ini waar alle apparaten en servers in staan
+
+Bevat het bestand `hosts.ini`, waarin alle hosts, VM’s en containers zijn gedefinieerd.
+
 ### playbooks
-Hier bevinden zich alle playbooks
+
+Bevat alle gebruikte Ansible playbooks.
+
 #### configure-ha.yml
-Voegt alle VM's toe in de groep klant_vm_ha aan de HA cluster
+
+Voegt alle VM’s uit de groep `klant_vm_ha` toe aan de Proxmox High Availability configuratie.
+
 #### configure-security.yml
-Zet alle beveiliging aan etc
+
+Voert security hardening uit op alle servers, waaronder:
+
+* SSH key authenticatie
+* uitschakelen van root login
+* firewall configuratie (UFW)
+
 #### destroy.yml
-Een korte playbook die ik heb gebruikt voor het testen om snel alle LXC's en VM's te verwijderen 
+
+Playbook gebruikt tijdens development en testing om snel alle VM’s en LXC-containers te verwijderen.
+
 #### docker-networking.yml
-gereserveerd voor cloud opdracht 2
+
+Gereserveerd voor cloud opdracht 2.
+
 #### docker-setup.yml
-gereserveerd voor cloud opdracht 2
+
+Gereserveerd voor cloud opdracht 2.
+
 #### docker-swarm.yml
-gereserveerd voor cloud opdracht 2
+
+Gereserveerd voor cloud opdracht 2.
+
 #### install-wordpress.yml
-Installeert (de benodigdheden van) wordpress, maakt een user aan en prepareert de database
+
+Installeert WordPress inclusief:
+
+* benodigde packages
+* database configuratie
+* webserver configuratie
+
 #### install-zabbix-agent.yml
-Installeert de monitoring agent zabbix op alle VM's en LXC containers
+
+Installeert en configureert de Zabbix agent op alle VM’s en LXC-containers voor monitoring.
+
 #### provision-lxc-wordpress.yml
-Maakt een goedkope LXC container aan met een dynamisch IP en naam met 1 core, 1024MB RAM en 30GB disk storage
+
+Maakt schaalbare LXC-containers aan met:
+
+* 1 CPU core
+* 1024 MB RAM
+* 30 GB storage
+* dynamische naam en IP-configuratie
+
 #### provision-vm-cloudinit.yml
-Maakt via cloudinit image een VM aan met dyanmisch IP en naam met 2 cores, 2048MB RAM en 32GB disk storage
+
+Maakt schaalbare VM’s aan via cloud-init met:
+
+* 2 CPU cores
+* 2048 MB RAM
+* 32 GB storage
+* dynamische naam en IP-configuratie
+
 #### provision-vm-wordpress.yml
-Maak een enkele VM aan, maar is deprecated vanwege de beperkte schaalbaarheid
+
+Deprecated playbook voor het aanmaken van één enkele VM. Niet schaalbaar en vervangen door cloud-init oplossing.
+
 #### reverse-proxy.yml
-gereserveerd voor cloud opdracht 2
+
+Gereserveerd voor cloud opdracht 2.
+
 #### site-lxc.yml
-Beval alle playbooks voor de LXC containers met en zorgt ervoor dat alle playbooks voor de LXC containers uitgevoerd worden
+
+Hoofdplaybook voor klant 1 (LXC). Voert alle benodigde playbooks uit voor container-gebaseerde deployment.
+
 #### site-vm-ha.yml
-Beval alle playbooks voor de VM's met HA en zorgt ervoor dat alle playbooks voor de VM's met HA uitgevoerd worden
+
+Hoofdplaybook voor klant 2 (VM met HA). Voert alle benodigde playbooks uit inclusief High Availability configuratie.
+
 #### site.yml
-Bevat alle playbooks en kan in 1x gerund worden voor LXC en VM's met HA
+
+Overkoepelend playbook dat zowel LXC als VM infrastructuur in één run deployt.
+
 #### update.yml
-Playbook die dagelijks gerund wordt op de monitoring server om packages te updaten
 
+Playbook dat periodiek wordt uitgevoerd (bijvoorbeeld via cron) op de monitoring server om systemen te updaten.
 
-### ansible.cfg 
-negeert de host key checking tijdens het runnen van playbooks
+---
+
+## ansible.cfg
+
+Configuratiebestand voor Ansible. Hierin is onder andere `host_key_checking` uitgeschakeld om automatische deployments zonder interactie mogelijk te maken.
+
+---
 
 ## Docker
-gereserveerd voor cloud opdracht 2
-## Docs 
-Hier staan overige documenten in
-## Evidence
-Hier staan alle bewijzen in 
-### Ansible playbooks.md
-Uitgebreide uitleg van gebruik van ansible commands en uitleg wat de playbooks doen
-### Gitea install.md
-Navolgbare installatie van self-hosted Gitea
 
-## .gitattributes 
-Laaat de gebruikte talen in de repo zien
+Gereserveerd voor cloud opdracht 2.
+
+---
+
+## Docs
+
+Bevat aanvullende documentatie.
+
+---
+
+## Evidence
+
+Bevat bewijsmateriaal voor de opdracht.
+
+### Ansible playbooks.md
+
+Uitgebreide toelichting op de werking van de playbooks en gebruikte Ansible-commando’s.
+
+### Gitea install.md
+
+Stapsgewijze installatiehandleiding voor de self-hosted Gitea omgeving.
+
+---
+
+## .gitattributes
+
+Wordt gebruikt om de gebruikte programmeertalen binnen de repository inzichtelijk te maken.
