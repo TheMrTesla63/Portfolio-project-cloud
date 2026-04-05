@@ -43,47 +43,48 @@
         line: 'PasswordAuthentication no'
       notify: Restart SSH
 
+    - name: Install UFW
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+        update_cache: yes
+
+    - name: Default deny incoming
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Default allow outgoing
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Allow Zabbix agent
+      community.general.ufw:
+        rule: allow
+        port: 10050
+
+    - name: Allow SSH
+      community.general.ufw:
+        rule: allow
+        port: 22
+
+    - name: Allow HTTP
+      community.general.ufw:
+        rule: allow
+        port: 80
+
+    - name: Allow HTTPS
+      community.general.ufw:
+        rule: allow
+        port: 443
+
+    - name: Enable firewall
+      community.general.ufw:
+        state: enabled
+
   handlers:
     - name: Restart SSH
       ansible.builtin.service:
         name: ssh
         state: restarted
-
-      - name: Install UFW
-      apt:
-        name: ufw
-        state: present
-
-    - name: Default deny incoming
-      ufw:
-        direction: incoming
-        policy: deny
-
-    - name: Default allow outgoing
-      ufw:
-        direction: outgoing
-        policy: allow
-
-    - name: Allow Zabbix agent
-      ufw:
-       rule: allow
-       port: 10050
-
-    - name: Allow SSH
-      ufw:
-        rule: allow
-        port: 22
-
-    - name: Allow HTTP
-      ufw:
-        rule: allow
-        port: 80
-
-    - name: Allow HTTPS
-      ufw:
-        rule: allow
-        port: 443
-
-    - name: Enable firewall
-      ufw:
-        state: enabled
