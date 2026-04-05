@@ -41,7 +41,7 @@ Ik ben verantwoordelijk voor:
 **Bewijs:**
 
 * [ ] Screenshot cluster (pve01/pve02/pve03)
-![Proxmox cluster](evidence/images/cluster.png)
+![Proxmox cluster](images/cluster.png)
 * [ ] Screenshot enterprise repo configuratie
 * [ ] Ansible playbook voor updates (`update.yml`)
 * [ ] Monitoring (Zabbix) dashboard
