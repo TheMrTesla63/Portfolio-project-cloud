@@ -131,6 +131,8 @@ Vooral:
 * [ ] Screenshot van 6 containers
       ![Proxmox cluster](images/lxc6.png)
 * [ ] Firewall regels (UFW / Proxmox) (`configure-security.yml` / UFW regels)
+      <img width="534" height="306" alt="image" src="https://github.com/user-attachments/assets/adcb8e51-bfa5-49d2-9bf2-2ec9c62cb952" />
+
 * [ ] Netwerk rate limit zichtbaar in `pct config` (rate=50)
 
 ---
@@ -152,7 +154,13 @@ Vooral:
       ![Proxmox cluster](images/pve01-aan.png) Zie hier dat zowel de HA VM's op PVE01 zitten als de LXC containers
       Na uitzetten zien we dat de LXC containers onbereikbaar zijn (goedkoop)
       De HA VM's schakelen over naar PVE02 en PVE03
-      ![Proxmox cluster](images/pve01-uit.png) 
+      ![Proxmox cluster](images/pve01-uit.png)
+      Voor failover:
+    - VM’s draaien op PVE01
+    
+    Na failover:
+    - VM’s draaien op PVE02/PVE03 (zie ha-manager status)
+
 
 ---
 
@@ -166,7 +174,7 @@ Vooral:
 **Bewijs:**
 
 * [ ] `configure-security.yml` zie hier de configuratie voor SSH keys 
-* [ ] `zie hosts.ini` met `elk een unieke ssh_user`
+* [ ] `zie hosts.ini` Elke server heeft een unieke gebruiker (bijv. vm-ha-wp1, lxc-wp1), zichtbaar in hosts.ini en gebruikt voor SSH login.
 * [ ] `/home/<user>/.ssh/authorized_keys`
 <img width="1283" height="358" alt="image" src="https://github.com/user-attachments/assets/d7394b60-6ac4-486c-85e8-e54d3819c5d4" />
 * [ ] Login test (`ssh user@host`)
