@@ -4,8 +4,8 @@
   become: true
 
   vars:
-    admin_user: ansible
-    ssh_public_key: "{{ lookup('file', '/home/monitoring/.ssh/id_ed25519.pub') }}"
+    admin_user: "{{ ssh_user | default('ansible') }}"
+    ssh_public_key: "{{ lookup('file', ssh_key_file | default('/home/monitoring/.ssh/id_ed25519.pub')) }}"
 
   tasks:
     - name: Ensure admin user exists
