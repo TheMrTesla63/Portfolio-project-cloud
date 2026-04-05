@@ -185,7 +185,7 @@
       lineinfile:
         path: "{{ inventory_file }}"
         insertafter: '^\[{{ inventory_group }}\]$'
-        line: "{{ item.vm_name }} ansible_host={{ item.vm_ip.split('/')[0] }} ansible_user={{ ci_user }}"
+        line: "{{ item.vm_name }} ansible_host={{ item.vm_ip.split('/')[0] }} ansible_user={{ ci_user }} vmid={{ item.vmid }}"
         state: present
       delegate_to: localhost
       become: false
