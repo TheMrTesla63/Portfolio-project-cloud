@@ -48,3 +48,37 @@
       ansible.builtin.service:
         name: ssh
         state: restarted
+
+      - name: Install UFW
+      apt:
+        name: ufw
+        state: present
+
+    - name: Default deny incoming
+      ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Default allow outgoing
+      ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Allow SSH
+      ufw:
+        rule: allow
+        port: 22
+
+    - name: Allow HTTP
+      ufw:
+        rule: allow
+        port: 80
+
+    - name: Allow HTTPS
+      ufw:
+        rule: allow
+        port: 443
+
+    - name: Enable firewall
+      ufw:
+        state: enabled
