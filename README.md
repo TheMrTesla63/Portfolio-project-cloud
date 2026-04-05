@@ -132,6 +132,10 @@ Uitgebreide toelichting op de werking van de playbooks en gebruikte Ansible-comm
 
 Stapsgewijze installatiehandleiding voor de self-hosted Gitea omgeving.
 
+### bewijsstukken cloud opdracht 1.md
+
+Bevat alle bewijsstukken volgens de beoordelingsmatrix
+
 ---
 
 ## .gitattributes
