@@ -12,7 +12,7 @@
     subnet_prefix: "10.24.44"
     start_ip_octet: 161
     start_ctid: 161
-    lxc_count: 6
+    lxc_count: 39
 
     cores: 1
     memory: 1024
