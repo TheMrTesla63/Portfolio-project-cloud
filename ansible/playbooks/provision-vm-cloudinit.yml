@@ -9,7 +9,7 @@
 
     start_vmid: 121
     start_ip_octet: 121
-    vm_count: 1
+    vm_count: 3
 
     vm_name_prefix: "vm-ha-wp"
     subnet_prefix: "10.24.44"
