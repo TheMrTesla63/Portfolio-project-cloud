@@ -1,7 +1,7 @@
 ---
 - import_playbook: provision-vm-cloudinit.yml
 - import_playbook: provision-lxc-wordpress.yml
-- import_playbook: configure-vm-security.yml
+- import_playbook: configure-security.yml
 - import_playbook: install-zabbix-agent.yml
 - import_playbook: install-wordpress.yml
 - import_playbook: configure-ha.yml
