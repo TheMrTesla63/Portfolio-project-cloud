@@ -1,6 +1,14 @@
 ---
 - import_playbook: provision-vm-cloudinit.yml
 - import_playbook: provision-lxc-wordpress.yml
+
+
+- name: Refresh inventory after provisioning
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - meta: refresh_inventory
+
 - import_playbook: configure-security.yml
 - import_playbook: install-zabbix-agent.yml
 - import_playbook: install-wordpress.yml
