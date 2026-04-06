@@ -6,7 +6,7 @@
 
   vars:
     target_node: "pve01"
-    confirm_destroy: false   # zet op true om echt uit te voeren
+    confirm_destroy: false   # zet op true om uit te voeren
 
     inventory_file: "/home/monitoring/Portfolio-project-cloud/ansible/inventory/hosts.ini"
     vm_group: "klant_vm_ha"
@@ -111,6 +111,26 @@
       delegate_to: localhost
       become: false
       run_once: true
+
+    # =====================
+    # Zabbix cleanup
+    # =====================
+
+    - name: Remove hosts from Zabbix
+      delegate_to: localhost
+      become: false
+      vars:
+        zabbix_url: "http://10.24.44.110/zabbix"
+        zabbix_user: "Admin"
+        zabbix_password: "zabbix"
+      community.zabbix.zabbix_host:
+        server_url: "{{ zabbix_url }}"
+        login_user: "{{ zabbix_user }}"
+        login_password: "{{ zabbix_password }}"
+        host_name: "{{ item }}"
+        state: absent
+      loop: "{{ destroy_hosts }}"
+      failed_when: false
 
     - name: Done
       debug:
