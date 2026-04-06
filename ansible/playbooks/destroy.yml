@@ -1,12 +1,18 @@
 ---
-- name: Destroy all customer infrastructure
+- name: Destroy all customer infrastructure and cleanup traces
   hosts: proxmox
   become: true
   gather_facts: false
 
   vars:
     target_node: "pve01"
-    confirm_destroy: false   # 🔴 zet op true om echt te slopen
+    confirm_destroy: false   # zet op true om echt uit te voeren
+
+    inventory_file: "/home/monitoring/Portfolio-project-cloud/ansible/inventory/hosts.ini"
+    local_known_hosts: "/root/.ssh/known_hosts"
+
+    vm_group: "klant_vm_ha"
+    lxc_group: "klant_lxc"
 
   tasks:
     - name: Safety check
@@ -18,15 +24,19 @@
       meta: end_host
       when: inventory_hostname != target_node
 
+    - name: Build combined guest list
+      set_fact:
+        destroy_hosts: "{{ (groups[vm_group] | default([])) + (groups[lxc_group] | default([])) }}"
+
     # =====================
     # HA verwijderen
     # =====================
 
     - name: Remove VMs from HA
-      command: >
-        ha-manager remove vm:{{ hostvars[item].vmid }}
+      command: "ha-manager remove vm:{{ hostvars[item].vmid }}"
       failed_when: false
-      loop: "{{ groups['klant_vm_ha'] | default([]) }}"
+      changed_when: false
+      loop: "{{ groups[vm_group] | default([]) }}"
       when: hostvars[item].vmid is defined
 
     # =====================
@@ -34,15 +44,21 @@
     # =====================
 
     - name: Stop VMs
-      command: qm stop {{ hostvars[item].vmid }}
+      command: "qm stop {{ hostvars[item].vmid }}"
       failed_when: false
-      loop: "{{ groups['klant_vm_ha'] | default([]) }}"
+      changed_when: false
+      loop: "{{ groups[vm_group] | default([]) }}"
       when: hostvars[item].vmid is defined
 
+    - name: Wait briefly after stopping VMs
+      pause:
+        seconds: 5
+
     - name: Destroy VMs
-      command: qm destroy {{ hostvars[item].vmid }} --purge
+      command: "qm destroy {{ hostvars[item].vmid }} --purge"
       failed_when: false
-      loop: "{{ groups['klant_vm_ha'] | default([]) }}"
+      changed_when: false
+      loop: "{{ groups[vm_group] | default([]) }}"
       when: hostvars[item].vmid is defined
 
     # =====================
@@ -50,16 +66,55 @@
     # =====================
 
     - name: Stop LXCs
-      command: pct stop {{ hostvars[item].ctid }}
+      command: "pct stop {{ hostvars[item].ctid }}"
       failed_when: false
-      loop: "{{ groups['klant_lxc'] | default([]) }}"
+      changed_when: false
+      loop: "{{ groups[lxc_group] | default([]) }}"
       when: hostvars[item].ctid is defined
 
+    - name: Wait briefly after stopping LXCs
+      pause:
+        seconds: 5
+
     - name: Destroy LXCs
-      command: pct destroy {{ hostvars[item].ctid }}
+      command: "pct destroy {{ hostvars[item].ctid }} --purge"
       failed_when: false
-      loop: "{{ groups['klant_lxc'] | default([]) }}"
+      changed_when: false
+      loop: "{{ groups[lxc_group] | default([]) }}"
       when: hostvars[item].ctid is defined
+
+    # =====================
+    # SSH known_hosts cleanup
+    # =====================
+
+    - name: Remove hostname entries from local known_hosts
+      command: "ssh-keygen -R {{ item }}"
+      failed_when: false
+      changed_when: false
+      loop: "{{ destroy_hosts }}"
+      delegate_to: "{{ target_node }}"
+
+    - name: Remove ansible_host entries from local known_hosts
+      command: "ssh-keygen -R {{ hostvars[item].ansible_host }}"
+      failed_when: false
+      changed_when: false
+      loop: "{{ destroy_hosts }}"
+      when: hostvars[item].ansible_host is defined
+      delegate_to: "{{ target_node }}"
+
+    # =====================
+    # Inventory cleanup
+    # =====================
+
+    - name: Remove destroyed host lines from inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ item }}\\s"
+        state: absent
+      loop: "{{ destroy_hosts }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
 
     # =====================
     # Result
@@ -67,4 +122,7 @@
 
     - name: Done
       debug:
-        msg: "All VMs and LXCs destroyed (if confirm_destroy=true)"
+        msg:
+          - "Destroyed all VMs and LXCs (if confirm_destroy=true)"
+          - "Removed related SSH host keys from known_hosts"
+          - "Removed host entries from inventory"
