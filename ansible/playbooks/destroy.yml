@@ -9,8 +9,6 @@
     confirm_destroy: false   # zet op true om echt uit te voeren
 
     inventory_file: "/home/monitoring/Portfolio-project-cloud/ansible/inventory/hosts.ini"
-    local_known_hosts: "/root/.ssh/known_hosts"
-
     vm_group: "klant_vm_ha"
     lxc_group: "klant_lxc"
 
@@ -87,20 +85,18 @@
     # SSH known_hosts cleanup
     # =====================
 
-    - name: Remove hostname entries from local known_hosts
+    - name: Remove hostname entries from known_hosts
       command: "ssh-keygen -R {{ item }}"
       failed_when: false
       changed_when: false
       loop: "{{ destroy_hosts }}"
-      delegate_to: "{{ target_node }}"
 
-    - name: Remove ansible_host entries from local known_hosts
+    - name: Remove IP entries from known_hosts
       command: "ssh-keygen -R {{ hostvars[item].ansible_host }}"
       failed_when: false
       changed_when: false
       loop: "{{ destroy_hosts }}"
       when: hostvars[item].ansible_host is defined
-      delegate_to: "{{ target_node }}"
 
     # =====================
     # Inventory cleanup
@@ -116,13 +112,9 @@
       become: false
       run_once: true
 
-    # =====================
-    # Result
-    # =====================
-
     - name: Done
       debug:
         msg:
-          - "Destroyed all VMs and LXCs (if confirm_destroy=true)"
-          - "Removed related SSH host keys from known_hosts"
-          - "Removed host entries from inventory"
+          - "Destroyed all VMs and LXCs"
+          - "Removed known_hosts entries"
+          - "Removed host lines from inventory, group headers kept intact"
