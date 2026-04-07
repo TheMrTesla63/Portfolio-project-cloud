@@ -38,13 +38,11 @@ Playbook gebruikt tijdens development en testing om snel alle VM’s en LXC-cont
 
 Gereserveerd voor cloud opdracht 2.
 
-#### docker-setup.yml
-
-Gereserveerd voor cloud opdracht 2.
-
 #### docker-swarm.yml
+Voegt de drie docker VM's toe aan de docker swarm
 
-Gereserveerd voor cloud opdracht 2.
+#### install-docker-compose.yml
+installeert docker compose op de drie docker VM's
 
 #### install-wordpress.yml
 
@@ -80,9 +78,17 @@ Maakt schaalbare VM’s aan via cloud-init met:
 
 Deprecated playbook voor het aanmaken van één enkele VM. Niet schaalbaar en vervangen door cloud-init oplossing.
 
+#### provision-vm-docker-cloudinit.yml
+
+Installeert de 3 VM's met de ubuntu cloudinit image voor de docker swarm
+
 #### reverse-proxy.yml
 
 Gereserveerd voor cloud opdracht 2.
+
+#### site-docker.yml 
+
+Hoofdplaybook voor de Docker VM's. dat in één run de installatie voltooid inclusief monitoring, docker compose en de swarm.
 
 #### site-lxc.yml
 
@@ -135,6 +141,17 @@ Stapsgewijze installatiehandleiding voor de self-hosted Gitea omgeving.
 ### bewijsstukken cloud opdracht 1.md
 
 Bevat alle bewijsstukken volgens de beoordelingsmatrix
+
+### lesson 4, 7, 8, 9 en 10
+
+Bevat de uitwerkingen van cloud opdracht 2 deel 1
+
+### images
+Bevat enkele afbeeldingen voor de markdown documentatie
+
+### _resources
+Bevat enkele afbeeldingen voor de markdown documentatie
+
 
 ---
 
