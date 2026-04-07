@@ -1,0 +1,63 @@
+---
+- name: Install Docker and Docker Compose on Docker VMs
+  hosts: docker
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+
+    - name: Install Docker engine
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Install Docker Compose package if available
+      apt:
+        name: docker-compose-v2
+        state: present
+      register: compose_v2_result
+      failed_when: false
+
+    - name: Install legacy Docker Compose if v2 package is unavailable
+      apt:
+        name: docker-compose
+        state: present
+      when: compose_v2_result is failed
+
+    - name: Ensure docker service is enabled and started
+      service:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Ensure ansible user is in docker group
+      user:
+        name: ansible
+        groups: docker
+        append: true
+
+    - name: Check Docker version
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Check Docker Compose v2 version
+      command: docker compose version
+      register: docker_compose_v2_version
+      changed_when: false
+      failed_when: false
+
+    - name: Check legacy Docker Compose version
+      command: docker-compose --version
+      register: docker_compose_v1_version
+      changed_when: false
+      failed_when: false
+
+    - name: Show versions
+      debug:
+        msg:
+          - "{{ docker_version.stdout }}"
+          - "{{ docker_compose_v2_version.stdout | default('docker compose not available') }}"
+          - "{{ docker_compose_v1_version.stdout | default('docker-compose not available') }}"
