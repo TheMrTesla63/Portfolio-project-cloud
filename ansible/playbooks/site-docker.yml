@@ -3,4 +3,3 @@
 - import_playbook: install-zabbix-agent.yml
 - import_playbook: install-docker-compose.yml
 - import_playbook: docker-swarm.yml
-- import_playbook: configure-ha.yml
