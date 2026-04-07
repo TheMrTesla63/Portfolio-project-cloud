@@ -13,7 +13,7 @@ sudo apt upgrade -y
 
 Docker installeren:
 sudo apt install docker.io -y
-![262dafd02869383b49c0895947577bcb.png](../_resources/262dafd02869383b49c0895947577bcb.png)
+![262dafd02869383b49c0895947577bcb.png](_resources/262dafd02869383b49c0895947577bcb.png)
 Docker service controleren:
 sudo systemctl status docker
 ![203bd93625f585db6289674e2c58f48d.png](../_resources/203bd93625f585db6289674e2c58f48d.png)
