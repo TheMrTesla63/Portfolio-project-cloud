@@ -36,7 +36,7 @@ docker-compose --version
 of (nieuwere syntax):
 docker compose version
 
-![7d1fd56afc727ab144c6a1e7182af14b.png](../_resources/7d1fd56afc727ab144c6a1e7182af14b.png)
+![7d1fd56afc727ab144c6a1e7182af14b.png](_resources/7d1fd56afc727ab144c6a1e7182af14b.png)
 
 ---
 
@@ -57,7 +57,7 @@ services:
     ports:
       - "8080:80"
 
-![44c22aa93a76d33d00b24c64a47eb9c4.png](../_resources/44c22aa93a76d33d00b24c64a47eb9c4.png)
+![44c22aa93a76d33d00b24c64a47eb9c4.png](_resources/44c22aa93a76d33d00b24c64a47eb9c4.png)
 
 ---
 
@@ -72,7 +72,7 @@ Resultaat:
 Controle:
 docker ps
 
-![b8cdef53b95c8a75244a8d8cbf15fdf4.png](../_resources/b8cdef53b95c8a75244a8d8cbf15fdf4.png)
+![b8cdef53b95c8a75244a8d8cbf15fdf4.png](_resources/b8cdef53b95c8a75244a8d8cbf15fdf4.png)
 
 ---
 
@@ -83,7 +83,7 @@ http://10.24.44.51:8080
 
 Resultaat:
 - Nginx welkomstpagina zichtbaar
-![c5c717926633e1c6736916e6d350ba07.png](../_resources/c5c717926633e1c6736916e6d350ba07.png)
+![c5c717926633e1c6736916e6d350ba07.png](_resources/c5c717926633e1c6736916e6d350ba07.png)
 ---
 
 ## Logs bekijken
@@ -93,7 +93,7 @@ docker compose logs
 of live:
 docker compose logs -f
 
-![b37725b0730ca358853241fa8ade2d9f.png](../_resources/b37725b0730ca358853241fa8ade2d9f.png)
+![b37725b0730ca358853241fa8ade2d9f.png](_resources/b37725b0730ca358853241fa8ade2d9f.png)
 
 logs zijn per service gegroepeerd
 
@@ -106,7 +106,7 @@ docker compose down
 Resultaat:
 - Alle containers worden gestopt en verwijderd
 
-![35d0b140ce11970da127427fd2dae68c.png](../_resources/35d0b140ce11970da127427fd2dae68c.png)
+![35d0b140ce11970da127427fd2dae68c.png](_resources/35d0b140ce11970da127427fd2dae68c.png)
 
 ---
 
