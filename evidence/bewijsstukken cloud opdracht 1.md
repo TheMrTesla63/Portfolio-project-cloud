@@ -36,6 +36,9 @@ Ik ben verantwoordelijk voor:
 | pve03      | Proxmox node | 10.24.44.103 | Cluster node + HA + workloads      |
 | monitoring | VM + HA      | 10.24.44.110 | Monitoring (Zabbix / ansible)      |
 | ubuntu-git | VM           | 10.24.44.200 | Git server (Gitea)                 |
+| vm-dock1   | VM           | 10.24.44.51  | Docker swarm master                |
+| vm-dock2   | VM           | 10.24.44.52  | Docker swarm slave                 |
+| vm-dock3   | VM           | 10.24.44.53  | Docker swarm slave                 |
 
 ## Klant 1: LXC wordpress
 | Hostname | Type | IP-adres     | Node  | Doel               |
