@@ -1,3 +1,4 @@
+## added docker group
 ---
 - name: Install and configure Zabbix agent
   hosts: klant_vm_ha:klant_lxc:docker
