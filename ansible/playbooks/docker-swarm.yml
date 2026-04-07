@@ -1,0 +1,56 @@
+- name: Setup Docker Swarm cluster
+  hosts: docker
+  become: true
+
+  vars:
+    manager_ip: "10.24.44.51"
+
+  tasks:
+
+    - name: Initialize swarm on first node
+      command: docker swarm init --advertise-addr {{ manager_ip }}
+      when: inventory_hostname == "vm-ha-dock1"
+      register: swarm_init
+      failed_when: false
+
+    - name: Get join token from manager
+      command: docker swarm join-token -q manager
+      when: inventory_hostname == "vm-ha-dock1"
+      register: swarm_token
+      changed_when: false
+
+    - name: Set join token fact
+      set_fact:
+        join_token: "{{ swarm_token.stdout }}"
+      when: inventory_hostname == "vm-ha-dock1"
+
+    - name: Share token to all hosts
+      set_fact:
+        join_token: "{{ hostvars['vm-ha-dock1'].join_token }}"
+
+    - name: Join other nodes as manager
+      command: >
+        docker swarm join
+        --token {{ join_token }}
+        {{ manager_ip }}:2377
+      when: inventory_hostname != "vm-ha-dock1"
+      failed_when: false
+
+    - name: Promote nodes to manager (safety)
+      command: docker node promote {{ item }}
+      when: inventory_hostname == "vm-ha-dock1"
+      loop:
+        - vm-ha-dock2
+        - vm-ha-dock3
+      failed_when: false
+
+    - name: Show swarm nodes
+      command: docker node ls
+      when: inventory_hostname == "vm-ha-dock1"
+      register: node_list
+      changed_when: false
+
+    - name: Output cluster status
+      debug:
+        msg: "{{ node_list.stdout_lines }}"
+      when: inventory_hostname == "vm-ha-dock1"
