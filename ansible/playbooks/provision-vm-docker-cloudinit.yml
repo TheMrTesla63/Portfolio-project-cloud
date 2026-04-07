@@ -1,6 +1,4 @@
 # `ansible/playbooks/provision-vm-docker-cloudinit.yml`
-
-```yaml
 ---
 - name: Provision Docker VMs with cloud-init on Proxmox
   hosts: proxmox
