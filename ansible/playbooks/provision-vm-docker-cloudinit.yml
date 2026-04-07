@@ -11,13 +11,18 @@
     target_node: "pve01"
 
     vm_definitions:
-      - vmid: 51
+      - target_node: "pve01"
+        vmid: 51
         vm_name: "vm-ha-dock1"
         vm_ip: "10.24.44.51/24"
-      - vmid: 52
+
+      - target_node: "pve02"
+        vmid: 52
         vm_name: "vm-ha-dock2"
         vm_ip: "10.24.44.52/24"
-      - vmid: 53
+
+      - target_node: "pve03"
+        vmid: 53
         vm_name: "vm-ha-dock3"
         vm_ip: "10.24.44.53/24"
 
