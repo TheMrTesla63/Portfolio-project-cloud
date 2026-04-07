@@ -13,7 +13,7 @@
         name: docker.io
         state: present
 
-    - name: Install Docker Compose package if available
+    - name: Install Docker Compose v2 if available
       apt:
         name: docker-compose-v2
         state: present
