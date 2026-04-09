@@ -1,7 +1,11 @@
 const http = require('http');
 
+const PORT = 3001;
+
 const server = http.createServer((req, res) => {
   res.end("Hello DevSecOps!");
 });
 
-server.listen(3000);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
