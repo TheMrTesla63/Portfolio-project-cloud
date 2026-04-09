@@ -269,7 +269,7 @@ Vooral:
 
 ---
 
-# Demonstratie (verplicht)
+# Demonstratie
 
 ## Deployment
 
