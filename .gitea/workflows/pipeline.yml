@@ -30,7 +30,7 @@ jobs:
         run: |
           node index.js &
           sleep 3
-          curl -f http://localhost:3000 || exit 1
+          curl -f http://localhost:3001 || exit 1
 
   docker-build:
     runs-on: ubuntu-latest
