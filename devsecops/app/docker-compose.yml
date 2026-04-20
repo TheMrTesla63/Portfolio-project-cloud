@@ -1,0 +1,9 @@
+# devsecops/app/docker-compose.yml
+
+services:
+  app:
+    image: devsecops-app:latest
+    container_name: devsecops-app
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
