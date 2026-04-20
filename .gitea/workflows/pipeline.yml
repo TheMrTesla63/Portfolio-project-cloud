@@ -1,29 +1,25 @@
-# .gitea/workflows/pipeline.yml
-
 name: DevSecOps Pipeline
 
-on:
+"on":
   push:
     branches:
       - main
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Build Docker image
+      - name: Build image
         run: docker build -t devsecops-app:latest devsecops/app
 
   test:
-    name: Test
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Run test container
+      - name: Test container
         run: |
           docker rm -f devsecops-test || true
           docker run -d -p 3002:3000 --name devsecops-test devsecops-app:latest
@@ -32,23 +28,21 @@ jobs:
           docker rm -f devsecops-test
 
   security:
-    name: Security
     runs-on: ubuntu-latest
     needs: test
     steps:
-      - name: Scan Docker image with Trivy
+      - name: Trivy scan
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy:latest image devsecops-app:latest
 
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
     needs: security
     steps:
-      - name: Deploy application with Docker Compose
+      - name: Deploy
         run: |
           cd devsecops/app
-          docker compose down || true
-          docker compose up -d
+          docker-compose down || true
+          docker-compose up -d
