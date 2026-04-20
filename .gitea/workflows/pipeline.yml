@@ -37,4 +37,5 @@ jobs:
         run: |
           cd devsecops/app
           docker compose down || true
+          docker rm -f devsecops-app || true
           docker compose up -d
