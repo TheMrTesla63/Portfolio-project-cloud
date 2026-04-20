@@ -10,6 +10,9 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
+    container:
+      image: node:18
+
     defaults:
       run:
         working-directory: devsecops/app
@@ -17,11 +20,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Install Node.js
-        run: |
-          sudo apt update
-          sudo apt install -y nodejs npm
 
       - name: Install dependencies
         run: npm install
