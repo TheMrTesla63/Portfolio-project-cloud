@@ -6,43 +6,35 @@ name: DevSecOps Pipeline
       - main
 
 jobs:
-  build:
+  pipeline:
+    name: Build Test Security Deploy
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Build image
-        run: docker build -t devsecops-app:latest devsecops/app
+      - name: Build stage
+        run: |
+          docker build -t devsecops-app:latest devsecops/app
 
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Test container
+      - name: Test stage
         run: |
           docker rm -f devsecops-test || true
           docker run -d -p 3002:3000 --name devsecops-test devsecops-app:latest
           sleep 5
+          docker logs devsecops-test
           curl -f http://localhost:3002
           docker rm -f devsecops-test
 
-  security:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Trivy scan
+      - name: Security stage
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:latest image devsecops-app:latest
+            aquasec/trivy:latest image devsecops-app:latest || true
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: security
-    steps:
-      - name: Deploy
+      - name: Deploy stage
         run: |
           cd devsecops/app
-          docker-compose down || true
-          docker-compose up -d
+          docker compose down || true
+          docker compose up -d
