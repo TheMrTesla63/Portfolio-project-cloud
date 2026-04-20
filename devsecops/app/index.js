@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
   res.end(`
     <html>
       <body>
-        <h1>DevSecOps Demo App</h1>
+        <h1>DevSecOps Demo App v2</h1>
 
         <form method="GET">
           <input type="text" name="name" placeholder="Enter your name">
