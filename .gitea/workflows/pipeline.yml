@@ -21,10 +21,10 @@ jobs:
       - name: Test stage
         run: |
           docker rm -f devsecops-test || true
-          docker run -d -p 3002:3000 --name devsecops-test devsecops-app:latest
+          docker run -d --name devsecops-test devsecops-app:latest
           sleep 5
           docker logs devsecops-test
-          curl -f http://localhost:3002
+          docker exec devsecops-test curl -f http://localhost:3000
           docker rm -f devsecops-test
 
       - name: Security stage
