@@ -142,6 +142,7 @@ const server = http.createServer((req, res) => {
             <h2>Hello ${name || "guest"}</h2>
 
             ${
+              // --- demo: AUTHENTICATIE (aan/uit zetten HIERONDER)
               /*
               isAuthenticated
                 ? "<p class='status-admin'>Admin access granted</p>"
