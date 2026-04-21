@@ -1,12 +1,11 @@
----
-- name: Setup Gitea Actions runner on monitoring host
+```yaml
+- name: Setup Gitea Actions runner
   hosts: devsecops
   become: true
 
   vars:
     gitea_runner_version: "0.3.1"
     gitea_url: "http://10.24.44.200:3000"
-    gitea_runner_token: "REPLACE_WITH_TOKEN"
 
   tasks:
     - name: Download act_runner binary
@@ -15,28 +14,14 @@
         dest: /usr/local/bin/act_runner
         mode: '0755'
 
-    - name: Create runner config directory
+    - name: Create required directories
       file:
-        path: /etc/act_runner
+        path: "{{ item }}"
         state: directory
         mode: '0755'
-
-    - name: Create runner data directory
-      file:
-        path: /var/lib/act_runner
-        state: directory
-        mode: '0755'
-
-    - name: Generate runner config if missing
-      command: /usr/local/bin/act_runner generate-config
-      register: runner_config
-      changed_when: false
-
-    - name: Write runner config file
-      copy:
-        dest: /etc/act_runner/config.yaml
-        content: "{{ runner_config.stdout }}"
-        mode: '0644'
+      loop:
+        - /etc/act_runner
+        - /var/lib/act_runner
 
     - name: Create act_runner user
       user:
@@ -52,23 +37,32 @@
         groups: docker
         append: true
 
-    - name: Register runner
+    - name: Generate config if missing
+      command: /usr/local/bin/act_runner generate-config
+      args:
+        creates: /etc/act_runner/config.yaml
+      register: runner_config
+
+    - name: Write config file
+      copy:
+        dest: /etc/act_runner/config.yaml
+        content: "{{ runner_config.stdout }}"
+        mode: '0644'
+      when: runner_config.stdout is defined
+
+    - name: Register runner (one-time setup)
       command: >
         /usr/local/bin/act_runner --config /etc/act_runner/config.yaml register
         --no-interactive
         --instance {{ gitea_url }}
         --token {{ gitea_runner_token }}
         --name monitoring-runner
-        --labels ubuntu-latest,ubuntu-22.04
+        --labels ubuntu-latest
       args:
         chdir: /var/lib/act_runner
-      environment:
-        HOME: /var/lib/act_runner
-      register: runner_register
-      changed_when: "'Runner registered successfully' in runner_register.stdout or 'Runner registered successfully' in runner_register.stderr"
-      failed_when: false
+      when: gitea_runner_token is defined
 
-    - name: Create systemd service for act_runner
+    - name: Create systemd service
       copy:
         dest: /etc/systemd/system/act_runner.service
         mode: '0644'
@@ -76,24 +70,19 @@
           [Unit]
           Description=Gitea Actions runner
           After=docker.service
-          Requires=docker.service
 
           [Service]
           ExecStart=/usr/local/bin/act_runner daemon --config /etc/act_runner/config.yaml
           WorkingDirectory=/var/lib/act_runner
           User=act_runner
           Restart=always
-          RestartSec=10
 
           [Install]
           WantedBy=multi-user.target
 
-    - name: Reload systemd
+    - name: Enable and start runner
       systemd:
-        daemon_reload: true
-
-    - name: Enable and start act_runner
-      service:
         name: act_runner
-        state: started
         enabled: true
+        state: started
+        daemon_reload: true
