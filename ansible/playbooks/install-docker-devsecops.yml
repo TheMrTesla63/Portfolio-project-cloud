@@ -1,4 +1,3 @@
-```yaml
 - name: Install Docker on DevSecOps host
   hosts: devsecops
   become: true
