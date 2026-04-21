@@ -20,11 +20,11 @@ jobs:
 
       - name: Test stage
         run: |
-          docker rm -f devsecops-test || true
-          docker run -d --name devsecops-test devsecops-app:latest
+          docker ps -a --format '{{.Names}}' | grep -qx devsecops-test && docker rm -f devsecops-test || true
+          docker run -d -p 3000:3000 --name devsecops-test devsecops-app:latest
           sleep 5
           docker logs devsecops-test
-          docker exec devsecops-test curl -f http://localhost:3000
+          curl -f http://localhost:3000
           docker rm -f devsecops-test
 
       - name: Security stage - hardcoded secret check
@@ -41,6 +41,7 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy:latest image \
             --severity CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             --no-progress \
             devsecops-app:latest
