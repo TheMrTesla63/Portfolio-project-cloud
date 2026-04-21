@@ -6,8 +6,9 @@ const url = require('url');
 const PORT = 3000;
 
 // --- demo: hardcoded secret (aan/uit zetten)
+/*
 const ADMIN_PASSWORD = "supersecret123";
-
+*/
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const queryObject = parsedUrl.query;
