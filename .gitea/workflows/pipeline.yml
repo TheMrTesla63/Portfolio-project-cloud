@@ -27,11 +27,23 @@ jobs:
           docker exec devsecops-test curl -f http://localhost:3000
           docker rm -f devsecops-test
 
-      - name: Security stage
+      - name: Security stage - hardcoded secret check
+        run: |
+          if grep -Eq 'ADMIN_PASSWORD\s*=\s*".+"|ADMIN_PASSWORD\s*=\s*'\''.+'\''' devsecops/app/index.js; then
+            echo "Hardcoded secret gevonden in devsecops/app/index.js"
+            exit 1
+          fi
+          echo "Geen hardcoded secret gevonden"
+
+      - name: Security stage - Trivy image scan
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:latest image devsecops-app:latest || true
+            aquasec/trivy:latest image \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --no-progress \
+            devsecops-app:latest
 
       - name: Deploy stage
         run: |
