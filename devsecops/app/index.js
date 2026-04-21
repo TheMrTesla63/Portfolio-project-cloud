@@ -1,25 +1,17 @@
-// devsecops/app/index.js
-
+```
 const http = require('http');
 const url = require('url');
 
 const PORT = 3000;
 
-// --- demo: hardcoded secret (aan/uit zetten)
-/*
-const ADMIN_PASSWORD = "supersecret123";
-*/
+// no hardcoded secret
+// const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const queryObject = parsedUrl.query;
 
   const name = queryObject.name || "";
-
-  // --- demo: simpele auth (uitcommenten indien nodig)
-  /*
-  const password = queryObject.password || "";
-  const isAuthenticated = password === ADMIN_PASSWORD;
-  */
 
   res.writeHead(200, { 'Content-Type': 'text/html' });
 
@@ -35,15 +27,6 @@ const server = http.createServer((req, res) => {
         </form>
 
         <h2>Hello ${name}</h2>
-
-        ${
-          /*
-          isAuthenticated
-            ? "<p style='color:green;'>Admin</p>"
-            : "<p style='color:red;'>Guest</p>"
-          */
-          ""
-        }
       </body>
     </html>
   `);
@@ -52,3 +35,4 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+```
