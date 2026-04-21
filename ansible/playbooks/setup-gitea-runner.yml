@@ -1,4 +1,3 @@
-```yaml
 - name: Setup Gitea Actions runner
   hosts: devsecops
   become: true
