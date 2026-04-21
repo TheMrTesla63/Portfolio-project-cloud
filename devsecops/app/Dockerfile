@@ -1,7 +1,7 @@
 # devsecops/app/Dockerfile
 
 # --- vulnerable version (uncomment to use)
-#FROM node:18
+#FROM node:14
 
 # --- secure version (uncomment to use)
 FROM node:22-bookworm-slim
