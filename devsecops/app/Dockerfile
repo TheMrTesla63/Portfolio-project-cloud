@@ -1,13 +1,17 @@
 # devsecops/app/Dockerfile
 
-# vulnerable version (un)comment to enable/disable
-# FROM node:16
+# --- vulnerable version (uncomment to use)
+#FROM node:14
 
-# latest version (un)comment to enable/disable
-FROM node:18
+# --- secure version (uncomment to use)
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 COPY . .
-RUN npm install
+
+# optional: alleen nodig als je dependencies hebt
+# RUN npm install --omit=dev
+
+EXPOSE 3000
 
 CMD ["node", "index.js"]
