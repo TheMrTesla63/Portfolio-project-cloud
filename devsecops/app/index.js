@@ -129,7 +129,7 @@ const server = http.createServer((req, res) => {
       <body>
         <div class="container">
           <div class="tag">Node.js DevSecOps Demo</div>
-          <h1>DevSecOps Demo App v2.1!</h1>
+          <h1>DevSecOps Assignment Demo App v1!</h1>
           <p>A simple demo application for build, test, security and deployment.</p>
 
           <form method="GET">
