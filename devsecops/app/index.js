@@ -3,8 +3,7 @@
 
     const PORT = 3000;
 
-    // --- demo: hardcoded secret enabled
-    const ADMIN_PASSWORD = "supersecret123";
+    // --- demo: hardcoded secret disabled
 
     const server = http.createServer((req, res) => {
       const parsedUrl = url.parse(req.url, true);
@@ -12,9 +11,11 @@
 
       const name = queryObject.name || "";
 
-      // --- demo: simple authentication enabled
+      // --- demo: simple authentication disabled
+      /*
       const password = queryObject.password || "";
       const isAuthenticated = password === ADMIN_PASSWORD;
+      */
 
       res.writeHead(200, { 'Content-Type': 'text/html' });
 
@@ -137,9 +138,12 @@
               <div class="result">
                 <h2>Hello ${name || "guest"}</h2>
                 ${
+                  /*
                   isAuthenticated
                     ? "<p class='status-admin'>Admin access granted</p>"
                     : "<p class='status-guest'>Guest access only</p>"
+                  */
+                  ""
                 }
               </div>
             </div>
